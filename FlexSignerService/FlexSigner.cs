@@ -84,6 +84,8 @@ namespace FlexSignerService
             timer.Start();
         }
 
+        //teste
+
         private void ProcessSign()
         {
             try
