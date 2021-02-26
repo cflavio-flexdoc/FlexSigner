@@ -6,13 +6,17 @@ namespace FlexSignerService
 {
     public class FlexSigner
     {
-        SignX509 signx509;
-
+        Cert myCert;
+        PDFSigner pdfSigner;
+      
         private string cnpjCertificate = "";
+        private string nameCertificate = "";
+        private string thumbCertificate = "";
 
         private string signInputPath = "";
         private string signOutputPath = "";
         private string signTempPath = "";
+        
      
         private readonly Log _log = new Log();
 
@@ -30,6 +34,8 @@ namespace FlexSignerService
                 IniFile.IniWriteValue(configFile, "SIGN", "SignTempPath", @"C:\sign\temp\");
 
                 IniFile.IniWriteValue(configFile, "CERTIFICATE", "cnpj", "10583028000152");
+                IniFile.IniWriteValue(configFile, "CERTIFICATE", "name", "");
+                IniFile.IniWriteValue(configFile, "CERTIFICATE", "thumb", "");
             }
 
             _log.Debug("Init: [1]");
@@ -39,10 +45,17 @@ namespace FlexSignerService
             signTempPath = IniFile.IniReadValue(configFile, "SIGN", "SignTempPath");
 
             _log.Debug("Init: [2]");
+            System.IO.Directory.CreateDirectory(signInputPath);
+            System.IO.Directory.CreateDirectory(signOutputPath);
+            System.IO.Directory.CreateDirectory(signTempPath);
+            
+            _log.Debug("Init: [3]");
 
             cnpjCertificate = IniFile.IniReadValue(configFile, "CERTIFICATE", "cnpj");
+            nameCertificate = IniFile.IniReadValue(configFile, "CERTIFICATE", "name");
+            thumbCertificate = IniFile.IniReadValue(configFile, "CERTIFICATE", "thumb");
 
-            _log.Debug("Init: [3]");
+            _log.Debug("Init: [4]");
 
             try
             {
@@ -60,9 +73,10 @@ namespace FlexSignerService
             _log.Debug("SignTempPath:" + signTempPath);
 
             _log.Debug("Checking certificate");
-            signx509 = new SignX509(cnpjCertificate);
-
-            if (signx509.NumberOfCertificatesFound == 0)
+            myCert = new Cert(cnpjCertificate, nameCertificate, thumbCertificate);
+            myCert.LocateCert();
+            _log.Debug("Init: [5]");
+            if (myCert.NumberOfCertificatesFound == 0)
             {
                 _log.Debug("No certificates found: " + cnpjCertificate);
                 return;
@@ -70,10 +84,19 @@ namespace FlexSignerService
 
             _log.Debug("Certificate Ok : [" + cnpjCertificate + "]");
 
+            pdfSigner = new PDFSigner();
+            
+
+            _log.Debug("Init: [6]");
+
+            ProcessSign();
+
             this.timer = new System.Timers.Timer(30000D);  // 30000 milliseconds = 30 seconds
             this.timer.AutoReset = true;
             this.timer.Elapsed += new System.Timers.ElapsedEventHandler(this.timer1_Tick);
             this.timer.Start();
+
+            _log.Debug("Init: [7]");
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -96,8 +119,11 @@ namespace FlexSignerService
 
                 foreach (string file in files)
                 {
-                    DateTime fileTime = File.GetLastWriteTime(file);
-                    DateTime nowDate = DateTime.Now;
+                    DateTime fileTime;
+                    DateTime nowDate;
+
+                    fileTime = File.GetLastWriteTime(file);
+                    nowDate = DateTime.Now;
 
                     _log.Debug("ProcessSign:Processing: " + file);
 
@@ -108,35 +134,48 @@ namespace FlexSignerService
                     if (seconds >= 60)    //Delay
                     {
                         string fileout = signOutputPath + "\\" + System.IO.Path.GetFileName(file);
-                        string fileTmp = signTempPath + "\\" + System.IO.Path.GetFileName(file);
-
+                        string fileTmpInput = signTempPath + "\\" + System.IO.Path.GetFileName(file);
+                        
                         try
                         {
+                            if (System.IO.File.Exists(fileTmpInput))
+                                System.IO.File.Delete(fileTmpInput);
+
+                            File.Copy(file, fileTmpInput);
+
                             if (System.IO.File.Exists(fileout))
                                 System.IO.File.Delete(fileout);
 
-                            if (!signx509.CheckIfExistsSignature(file))
+                            MetaData metadata = null;
+                            string sigReason = "";
+                            string sigContact = "";
+                            string sigLocation = "";
+                                                        
+                            if (pdfSigner.Sign(fileTmpInput, fileout, myCert, metadata, sigReason, sigContact, sigLocation))
                             {
-                                if (signx509.SignPDF(file, fileTmp))
+                                //Assinou com sucesso.
+                                try
                                 {
+                                    File.SetAttributes(file, FileAttributes.Normal);
                                     System.IO.File.Delete(file);
-                                    System.IO.File.Move(fileTmp, fileout);
+                                    System.IO.File.Delete(fileTmpInput);
                                     _log.Debug("Processed: " + file);
                                 }
-                            }
+                                catch(Exception e)
+                                {
+                                    _log.Debug("**ERROR: [1]:" + e.Message + "/" + e.StackTrace) ;
+                                    _log.Debug("ERROR: " + file);
+                                }
+                            }                            
                             else
-                            {
-                                //Check if it is already signed
-                                _log.Debug("File already has certificate: " + file);
-                                System.IO.File.Move(file, fileout);
+                            {                             
+                                _log.Debug("Error Sign [?]: " + file);                               
                             }
-
                         }
                         catch (Exception e)
                         {
-                            _log.Debug("**ERROR: " + e.Message);
-                            _log.Debug("ERROR: " + file);
-                            System.IO.File.Delete(file);
+                            _log.Debug("**ERROR: [2]:" + e.Message + "/" + e.StackTrace);
+                            _log.Debug("ERROR: " + file);                            
 
                         }
                     }
@@ -145,7 +184,7 @@ namespace FlexSignerService
             }
             catch (Exception e)
             {
-                _log.Error("ProcessSIGN::Error:" + e.Message);
+                _log.Error("ProcessSIGN::Error:" + e.Message +"/" + e.StackTrace);
             }
 
             _log.Debug("ProcessSign: End");

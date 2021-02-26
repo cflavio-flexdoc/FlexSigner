@@ -4,17 +4,23 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 using FlexSignerService;
 
 namespace TestApp
 {
     class Program
-    {        
-        static void Main(string[] args)
+    {
+        /// <summary>
+        /// The main entry point for the application.
+        /// </summary>
+        [STAThread]
+        static void Main()
         {
-            FlexSigner w = new FlexSigner();
-            w.Init();
-            System.Threading.Thread.Sleep(Timeout.Infinite);
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            Application.Run(new Form1());
         }
+
     }
 }

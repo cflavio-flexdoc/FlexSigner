@@ -7,8 +7,8 @@
     <ProjectGuid>{1643D056-BE9E-4C35-9081-5920D0D47CF0}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>WatchDogService</RootNamespace>
-    <AssemblyName>WatchDogService</AssemblyName>
+    <RootNamespace>FlexSignerService</RootNamespace>
+    <AssemblyName>FlexSignerService</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -51,33 +51,37 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Files.cs" />
-    <Compile Include="Log.cs" />
-    <Compile Include="ProjectInstaller.cs">
+    <Compile Include="Utils\Files.cs" />
+    <Compile Include="Utils\Log.cs" />
+    <Compile Include="Service\ProjectInstaller.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="ProjectInstaller.Designer.cs">
+    <Compile Include="Service\ProjectInstaller.Designer.cs">
       <DependentUpon>ProjectInstaller.cs</DependentUpon>
     </Compile>
     <Compile Include="FlexSigner.cs" />
-    <Compile Include="ServiceController.cs">
+    <Compile Include="Service\ServiceController.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="ServiceController.Designer.cs">
+    <Compile Include="Service\ServiceController.Designer.cs">
       <DependentUpon>ServiceController.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="X509.cs" />
+    <Compile Include="Utils\Singleton.cs" />
+    <Compile Include="Old\X509.cs" />
+    <Compile Include="X509\Cert.cs" />
+    <Compile Include="X509\Metadata.cs" />
+    <Compile Include="X509\PDFSigner.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="ProjectInstaller.resx">
+    <EmbeddedResource Include="Service\ProjectInstaller.resx">
       <DependentUpon>ProjectInstaller.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ServiceController.resx">
+    <EmbeddedResource Include="Service\ServiceController.resx">
       <DependentUpon>ServiceController.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
@@ -85,8 +89,8 @@
     <Content Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="iTextSharp">
-      <Version>5.5.13.1</Version>
+    <PackageReference Include="iTextSharp-LGPL">
+      <Version>4.1.6</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
