@@ -16,8 +16,10 @@ namespace FlexSignerService
         private string signInputPath = "";
         private string signOutputPath = "";
         private string signTempPath = "";
-        
-     
+
+        private string delay = "";
+        private string cycle = "";
+             
         private readonly Log _log = new Log();
 
         private System.Timers.Timer timer;
@@ -36,6 +38,9 @@ namespace FlexSignerService
                 IniFile.IniWriteValue(configFile, "CERTIFICATE", "cnpj", "10583028000152");
                 IniFile.IniWriteValue(configFile, "CERTIFICATE", "name", "");
                 IniFile.IniWriteValue(configFile, "CERTIFICATE", "thumb", "");
+
+                IniFile.IniWriteValue(configFile, "TIMER", "Delay", "30");
+                IniFile.IniWriteValue(configFile, "TIMER", "cycle", "15");
             }
 
             _log.Debug("Init: [1]");
@@ -55,6 +60,15 @@ namespace FlexSignerService
             nameCertificate = IniFile.IniReadValue(configFile, "CERTIFICATE", "name");
             thumbCertificate = IniFile.IniReadValue(configFile, "CERTIFICATE", "thumb");
 
+            delay = IniFile.IniReadValue(configFile, "TIMER", "delay");
+            cycle = IniFile.IniReadValue(configFile, "TIMER", "cycle");
+
+            if (delay == "")
+                delay = "30";
+
+            if (cycle == "")
+                delay = "15";
+
             _log.Debug("Init: [4]");
 
             try
@@ -67,10 +81,15 @@ namespace FlexSignerService
             {
                 _log.Debug("Init: Error CreateDir:" + e.Message);
             }
-        
+
+            _log.Debug("cnpj:" + cnpjCertificate);
+            _log.Debug("name:" + nameCertificate);
+            _log.Debug("thumb:" + thumbCertificate);
             _log.Debug("SignInputPath:" + signInputPath);
             _log.Debug("SignOutputPath:" + signOutputPath);
             _log.Debug("SignTempPath:" + signTempPath);
+            _log.Debug("Cycle:" + cycle);
+            _log.Debug("Delay:" + delay);
 
             _log.Debug("Checking certificate");
             myCert = new Cert(cnpjCertificate, nameCertificate, thumbCertificate);
@@ -91,7 +110,9 @@ namespace FlexSignerService
 
             ProcessSign();
 
-            this.timer = new System.Timers.Timer(30000D);  // 30000 milliseconds = 30 seconds
+            int cycleInt = Convert.ToInt32("0" + cycle)*1000;
+
+            this.timer = new System.Timers.Timer(cycleInt);  // 30000 milliseconds = 30 seconds
             this.timer.AutoReset = true;
             this.timer.Elapsed += new System.Timers.ElapsedEventHandler(this.timer1_Tick);
             this.timer.Start();
@@ -131,7 +152,9 @@ namespace FlexSignerService
                     TimeSpan span = nowDate - fileTime;
                     var seconds = (int)span.TotalSeconds;
 
-                    if (seconds >= 60)    //Delay
+                    int delayInt = Convert.ToInt32("0" + delay);
+
+                    if (seconds >= delayInt)    //Delay
                     {
                         string fileout = signOutputPath + "\\" + System.IO.Path.GetFileName(file);
                         string fileTmpInput = signTempPath + "\\" + System.IO.Path.GetFileName(file);
@@ -163,21 +186,25 @@ namespace FlexSignerService
                                 }
                                 catch(Exception e)
                                 {
-                                    _log.Debug("**ERROR: [1]:" + e.Message + "/" + e.StackTrace) ;
-                                    _log.Debug("ERROR: " + file);
+                                    _log.Error("**ERROR: [1]:" + e.Message + "/" + e.StackTrace) ;
+                                    _log.Error("ERROR: " + file);
                                 }
                             }                            
                             else
                             {                             
-                                _log.Debug("Error Sign [?]: " + file);                               
+                                _log.Error("Error Sign [?]: " + file);                               
                             }
                         }
                         catch (Exception e)
                         {
-                            _log.Debug("**ERROR: [2]:" + e.Message + "/" + e.StackTrace);
-                            _log.Debug("ERROR: " + file);                            
+                            _log.Error("**ERROR: [2]:" + e.Message + "/" + e.StackTrace);
+                            _log.Error("ERROR: " + file);                            
 
                         }
+                    }
+                    else
+                    {
+                        _log.Debug("Delay:Skiped: " + file);
                     }
 
                 }
