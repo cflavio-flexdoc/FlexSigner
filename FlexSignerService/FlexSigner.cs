@@ -6,20 +6,17 @@ namespace FlexSignerService
 {
     public class FlexSigner
     {
-        Cert myCert;
-        PDFSigner pdfSigner;
-      
+        SignX509 signx509;
+
         private string cnpjCertificate = "";
-        private string nameCertificate = "";
-        private string thumbCertificate = "";
 
         private string signInputPath = "";
         private string signOutputPath = "";
         private string signTempPath = "";
 
-        private string delay = "";
-        private string cycle = "";
-             
+        private string signCycle = "";
+        private string signDelay = "";
+
         private readonly Log _log = new Log();
 
         private System.Timers.Timer timer;
@@ -31,45 +28,34 @@ namespace FlexSignerService
 
             if (!File.Exists(configFile))
             {
+                IniFile.IniWriteValue(configFile, "SIGN", "Cycle", "10");
+                IniFile.IniWriteValue(configFile, "SIGN", "Delay", "15");
                 IniFile.IniWriteValue(configFile, "SIGN", "SignInputPath", @"C:\sign\input\");
                 IniFile.IniWriteValue(configFile, "SIGN", "SignOutputPath", @"C:\sign\output\");
                 IniFile.IniWriteValue(configFile, "SIGN", "SignTempPath", @"C:\sign\temp\");
 
-                IniFile.IniWriteValue(configFile, "CERTIFICATE", "cnpj", "10583028000152");
-                IniFile.IniWriteValue(configFile, "CERTIFICATE", "name", "");
-                IniFile.IniWriteValue(configFile, "CERTIFICATE", "thumb", "");
-
-                IniFile.IniWriteValue(configFile, "TIMER", "Delay", "30");
-                IniFile.IniWriteValue(configFile, "TIMER", "cycle", "15");
+                IniFile.IniWriteValue(configFile, "CERTIFICATE", "cnpj", "10583028000152");                
             }
 
             _log.Debug("Init: [1]");
+
+            signCycle = IniFile.IniReadValue(configFile, "SIGN", "Cycle");
+            if (signCycle == "")
+                signCycle = "10";
+
+            signDelay = IniFile.IniReadValue(configFile, "SIGN", "Delay");
+            if (signDelay == "")
+                signDelay = "10";
 
             signInputPath = IniFile.IniReadValue(configFile, "SIGN", "SignInputPath");
             signOutputPath = IniFile.IniReadValue(configFile, "SIGN", "SignOutputPath");
             signTempPath = IniFile.IniReadValue(configFile, "SIGN", "SignTempPath");
 
             _log.Debug("Init: [2]");
-            System.IO.Directory.CreateDirectory(signInputPath);
-            System.IO.Directory.CreateDirectory(signOutputPath);
-            System.IO.Directory.CreateDirectory(signTempPath);
-            
-            _log.Debug("Init: [3]");
 
             cnpjCertificate = IniFile.IniReadValue(configFile, "CERTIFICATE", "cnpj");
-            nameCertificate = IniFile.IniReadValue(configFile, "CERTIFICATE", "name");
-            thumbCertificate = IniFile.IniReadValue(configFile, "CERTIFICATE", "thumb");
 
-            delay = IniFile.IniReadValue(configFile, "TIMER", "delay");
-            cycle = IniFile.IniReadValue(configFile, "TIMER", "cycle");
-
-            if (delay == "")
-                delay = "30";
-
-            if (cycle == "")
-                delay = "15";
-
-            _log.Debug("Init: [4]");
+            _log.Debug("Init: [3]");
 
             try
             {
@@ -81,21 +67,17 @@ namespace FlexSignerService
             {
                 _log.Debug("Init: Error CreateDir:" + e.Message);
             }
-
-            _log.Debug("cnpj:" + cnpjCertificate);
-            _log.Debug("name:" + nameCertificate);
-            _log.Debug("thumb:" + thumbCertificate);
+        
             _log.Debug("SignInputPath:" + signInputPath);
             _log.Debug("SignOutputPath:" + signOutputPath);
             _log.Debug("SignTempPath:" + signTempPath);
-            _log.Debug("Cycle:" + cycle);
-            _log.Debug("Delay:" + delay);
+            _log.Debug("SignCycle:" + signCycle);
+            _log.Debug("SignDelay:" + signDelay);
 
             _log.Debug("Checking certificate");
-            myCert = new Cert(cnpjCertificate, nameCertificate, thumbCertificate);
-            myCert.LocateCert();
-            _log.Debug("Init: [5]");
-            if (myCert.NumberOfCertificatesFound == 0)
+            signx509 = new SignX509(cnpjCertificate);
+
+            if (signx509.NumberOfCertificatesFound == 0)
             {
                 _log.Debug("No certificates found: " + cnpjCertificate);
                 return;
@@ -103,21 +85,12 @@ namespace FlexSignerService
 
             _log.Debug("Certificate Ok : [" + cnpjCertificate + "]");
 
-            pdfSigner = new PDFSigner();
-            
+            int cycle = (Convert.ToInt32("0" + signCycle))*1000;
 
-            _log.Debug("Init: [6]");
-
-            ProcessSign();
-
-            int cycleInt = Convert.ToInt32("0" + cycle)*1000;
-
-            this.timer = new System.Timers.Timer(cycleInt);  // 30000 milliseconds = 30 seconds
+            this.timer = new System.Timers.Timer(cycle);  // 30000 milliseconds = 30 seconds
             this.timer.AutoReset = true;
             this.timer.Elapsed += new System.Timers.ElapsedEventHandler(this.timer1_Tick);
             this.timer.Start();
-
-            _log.Debug("Init: [7]");
         }
 
         private void timer1_Tick(object sender, EventArgs e)
@@ -127,8 +100,6 @@ namespace FlexSignerService
             ProcessSign();
             timer.Start();
         }
-
-        //teste
 
         private void ProcessSign()
         {
@@ -140,11 +111,8 @@ namespace FlexSignerService
 
                 foreach (string file in files)
                 {
-                    DateTime fileTime;
-                    DateTime nowDate;
-
-                    fileTime = File.GetLastWriteTime(file);
-                    nowDate = DateTime.Now;
+                    DateTime fileTime = File.GetLastWriteTime(file);
+                    DateTime nowDate = DateTime.Now;
 
                     _log.Debug("ProcessSign:Processing: " + file);
 
@@ -152,66 +120,48 @@ namespace FlexSignerService
                     TimeSpan span = nowDate - fileTime;
                     var seconds = (int)span.TotalSeconds;
 
-                    int delayInt = Convert.ToInt32("0" + delay);
+                    int delay = (Convert.ToInt32("0" + signCycle));
 
-                    if (seconds >= delayInt)    //Delay
+                    if (seconds >= delay)    //Delay
                     {
                         string fileout = signOutputPath + "\\" + System.IO.Path.GetFileName(file);
-                        string fileTmpInput = signTempPath + "\\" + System.IO.Path.GetFileName(file);
-                        
+                        string fileTmp = signTempPath + "\\" + System.IO.Path.GetFileName(file);
+
                         try
                         {
-                            if (System.IO.File.Exists(fileTmpInput))
-                                System.IO.File.Delete(fileTmpInput);
-
-                            File.Copy(file, fileTmpInput);
-
                             if (System.IO.File.Exists(fileout))
                                 System.IO.File.Delete(fileout);
 
-                            MetaData metadata = null;
-                            string sigReason = "";
-                            string sigContact = "";
-                            string sigLocation = "";
-                                                        
-                            if (pdfSigner.Sign(fileTmpInput, fileout, myCert, metadata, sigReason, sigContact, sigLocation))
+                            if (System.IO.File.Exists(fileTmp))
+                                System.IO.File.Delete(fileTmp);
+
+                            if (signx509.SignPDF(file, fileTmp))
                             {
-                                //Assinou com sucesso.
-                                try
-                                {
-                                    File.SetAttributes(file, FileAttributes.Normal);
-                                    System.IO.File.Delete(file);
-                                    System.IO.File.Delete(fileTmpInput);
-                                    _log.Debug("Processed: " + file);
-                                }
-                                catch(Exception e)
-                                {
-                                    _log.Error("**ERROR: [1]:" + e.Message + "/" + e.StackTrace) ;
-                                    _log.Error("ERROR: " + file);
-                                }
-                            }                            
-                            else
-                            {                             
-                                _log.Error("Error Sign [?]: " + file);                               
+                                System.IO.File.Delete(file);
+                                System.IO.File.SetCreationTime(fileTmp, System.DateTime.Now);
+                                System.IO.File.SetLastWriteTime(fileTmp, System.DateTime.Now);
+                                System.IO.File.Move(fileTmp, fileout);
+                                _log.Debug("Processed: " + file);
                             }
+                        
                         }
                         catch (Exception e)
                         {
-                            _log.Error("**ERROR: [2]:" + e.Message + "/" + e.StackTrace);
-                            _log.Error("ERROR: " + file);                            
+                            _log.Debug("**ERROR: " + e.Message);
+                            _log.Debug("ERROR: " + file);
+                            System.IO.File.Delete(file);
 
                         }
                     }
                     else
                     {
-                        _log.Debug("Delay:Skiped: " + file);
+                        _log.Debug("Delay:" + file);                        
                     }
-
                 }
             }
             catch (Exception e)
             {
-                _log.Error("ProcessSIGN::Error:" + e.Message +"/" + e.StackTrace);
+                _log.Error("ProcessSIGN::Error:" + e.Message);
             }
 
             _log.Debug("ProcessSign: End");

@@ -9,9 +9,10 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>FlexSignerService</RootNamespace>
     <AssemblyName>FlexSignerService</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -33,10 +34,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="log4net, Version=1.2.9.0, Culture=neutral, PublicKeyToken=b32731d11ce58905">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\FlexCapture\External DLLs\log4net.dll</HintPath>
-    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration.Install" />
     <Reference Include="System.Core" />
@@ -51,36 +48,33 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Utils\Files.cs" />
-    <Compile Include="Utils\Log.cs" />
-    <Compile Include="Service\ProjectInstaller.cs">
+    <Compile Include="Files.cs" />
+    <Compile Include="Log.cs" />
+    <Compile Include="ProjectInstaller.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Service\ProjectInstaller.Designer.cs">
+    <Compile Include="ProjectInstaller.Designer.cs">
       <DependentUpon>ProjectInstaller.cs</DependentUpon>
     </Compile>
     <Compile Include="FlexSigner.cs" />
-    <Compile Include="Service\ServiceController.cs">
+    <Compile Include="ServiceController.cs">
       <SubType>Component</SubType>
     </Compile>
-    <Compile Include="Service\ServiceController.Designer.cs">
+    <Compile Include="ServiceController.Designer.cs">
       <DependentUpon>ServiceController.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Utils\Singleton.cs" />
-    <Compile Include="X509\Cert.cs" />
-    <Compile Include="X509\Metadata.cs" />
-    <Compile Include="X509\PDFSigner.cs" />
+    <Compile Include="X509.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Service\ProjectInstaller.resx">
+    <EmbeddedResource Include="ProjectInstaller.resx">
       <DependentUpon>ProjectInstaller.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Service\ServiceController.resx">
+    <EmbeddedResource Include="ServiceController.resx">
       <DependentUpon>ServiceController.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
@@ -88,8 +82,11 @@
     <Content Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="iTextSharp-LGPL">
-      <Version>4.1.6</Version>
+    <PackageReference Include="iTextSharp">
+      <Version>5.5.13.1</Version>
+    </PackageReference>
+    <PackageReference Include="log4net">
+      <Version>2.0.12</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

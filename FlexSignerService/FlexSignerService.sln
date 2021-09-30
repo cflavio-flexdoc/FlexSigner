@@ -1,13 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.31025.194
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.779
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexSignerService", "FlexSignerService.csproj", "{1643D056-BE9E-4C35-9081-5920D0D47CF0}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestApp", "..\TestApp\TestApp.csproj", "{2D055EBB-F100-4C26-B30D-F8594257130F}"
-EndProject
-Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "Setup1", "..\Setup1\Setup1.vdproj", "{D26130EB-873B-461A-A3BD-CF1260B6CAB4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -23,8 +21,6 @@ Global
 		{2D055EBB-F100-4C26-B30D-F8594257130F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2D055EBB-F100-4C26-B30D-F8594257130F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2D055EBB-F100-4C26-B30D-F8594257130F}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D26130EB-873B-461A-A3BD-CF1260B6CAB4}.Debug|Any CPU.ActiveCfg = Debug
-		{D26130EB-873B-461A-A3BD-CF1260B6CAB4}.Release|Any CPU.ActiveCfg = Release
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
